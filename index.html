@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Barber Pro | Cliente</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --bg: #0A0A0A; --card: #161616; --text: #FFF; --gray: #888; --red: #ff4444; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background: var(--bg); color: var(--text); padding: 30px 20px 40px 20px; }
+        
+        .view { display: none; animation: fadeIn 0.1s ease; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .glass-card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid #222; margin-bottom: 25px; }
+        
+        input { width: 100%; padding: 16px; background: #1e1e1e; border: 1px solid #333; color: white; border-radius: 12px; margin-bottom: 12px; font-size: 1rem; outline: none; }
+        
+        .btn-gold { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
+        .btn-outline { background: none; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+        
+        .ponto-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
+        .ponto-circulo { width: 42px; height: 42px; border-radius: 50%; border: 2px dashed #444; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #444; font-weight: bold; }
+        .ponto-circulo.check { border: 2px solid var(--gold); color: var(--gold); background: rgba(212, 175, 55, 0.1); }
+        .ponto-circulo.brinde { border: 2px solid var(--gold); background: var(--gold); color: black; }
+        
+        .active-booking-card { background: #1a1a1a; border: 1px solid #333; border-left: 4px solid var(--gold); border-radius: 15px; padding: 20px; margin-bottom: 20px; }
+        
+        .grid-horas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+        .slot { padding: 14px 5px; background: #222; border-radius: 10px; text-align: center; border: 1px solid #333; cursor: pointer; font-size: 0.95rem; }
+        .slot.selecionado { background: var(--gold); color: #000; font-weight: bold; border-color: var(--gold); }
+        .slot.indisponivel { opacity: 0.2; cursor: not-allowed; pointer-events: none; background: #111; }
+        
+        .closed-alert { background: rgba(255, 68, 68, 0.1); border: 1px solid var(--red); color: var(--red); padding: 20px; border-radius: 15px; text-align: center; font-weight: bold; margin-top: 20px; display: none; }
+        
+        h1, h2, h3 { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div id="view-login" class="view">
+        <h1 style="color:var(--gold); text-align:center; margin-bottom:40px; font-size: 2.2rem;">Barber Pro</h1>
+        <div class="glass-card">
+            <input type="text" id="login-nome" placeholder="Nome Completo">
+            <input type="tel" id="login-tel" placeholder="(00)00000-0000" maxlength="14">
+            <button class="btn-gold" style="margin-top: 10px;" onclick="salvarLogin()">ENTRAR / CADASTRAR</button>
+        </div>
+    </div>
+    
+    <div id="view-home" class="view">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h1 id="txt-saudacao" style="font-size: 1.6rem; border-left: 4px solid var(--gold); padding-left: 12px;">Olá!</h1>
+            <div style="display:flex; gap:8px;">
+                <button class="btn-outline" onclick="showView('view-perfil')">Perfil</button>
+                <button class="btn-outline" onclick="logout()">Sair</button>
+            </div>
+        </div>
+        
+        <div id="sessao-fidelidade" class="glass-card" style="display:none; border-color: var(--gold);">
+            <div style="text-align:center">
+                <h3 style="color:var(--gold); text-transform: uppercase; font-size: 1rem;">Cartão Fidelidade</h3>
+                <p id="subtitulo-fidelidade" style="font-size:0.85rem; color:var(--gray); margin-top: 5px;"></p>
+            </div>
+            <div id="pontos-cliente" class="ponto-grid"></div>
+            <p id="msg-fidelidade" style="text-align:center; font-size:0.85rem; font-weight:bold; color: var(--gold)"></p>
+        </div>
+
+        <div class="glass-card">
+            <h3 style="font-size: 1.1rem; margin-bottom: 20px; text-align: center;">Meus Agendamentos</h3>
+            <div id="lista-meus-horarios"></div>
+            <button class="btn-gold" style="width:100%; margin-top:10px" onclick="showView('view-barbeiros')">NOVO AGENDAMENTO</button>
+        </div>
+    </div>
+
+    <div id="view-perfil" class="view">
+        <h2 style="color:var(--gold); margin-bottom:25px">Editar Perfil</h2>
+        <div class="glass-card">
+            <label style="font-size: 0.8rem; color: var(--gold); margin-bottom: 5px; display: block;">Nome:</label>
+            <input type="text" id="edit-nome" placeholder="Nome Completo">
+            <label style="font-size: 0.8rem; color: var(--gold); margin-bottom: 5px; display: block;">WhatsApp:</label>
+            <input type="tel" id="edit-tel" placeholder="(00)00000-0000" maxlength="14">
+            <button class="btn-gold" style="margin-top: 15px;" onclick="atualizarPerfil()">SALVAR ALTERAÇÕES</button>
+            <button class="btn-outline" onclick="showView('view-home')" style="width:100%; margin-top:15px; border:none;">Voltar para Início</button>
+        </div>
+    </div>
+    
+    <div id="view-barbeiros" class="view">
+        <h2 style="color:var(--gold); margin-bottom:25px">Escolha o Profissional</h2>
+        <div class="glass-card" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="selecionarBarbeiro('B1', 'Kevinho Barber')">
+            <b>Kevinho Barber</b> <span style="color: var(--gold);">➜</span>
+        </div>
+        <div class="glass-card" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="selecionarBarbeiro('B2', 'Vinicius Barber')">
+            <b>Vinicius Barber</b> <span style="color: var(--gold);">➜</span>
+        </div>
+        <button class="btn-outline" onclick="showView('view-home')" style="width:100%; padding: 15px;">Voltar</button>
+    </div>
+    
+    <div id="view-agenda" class="view">
+        <h2 id="txt-nome-barbeiro" style="color: var(--gold);">Agenda</h2>
+        <div class="glass-card" style="padding: 15px;">
+            <label style="font-size: 0.8rem; color: var(--gold); display: block; margin-bottom: 8px;">Selecione a Data:</label>
+            <input type="date" id="input-data" onchange="buscarHorarios()">
+        </div>
+        <div id="aviso-fechado" class="closed-alert">BARBEARIA FECHADA</div>
+        <div id="container-horas" class="grid-horas"></div>
+        <button id="btn-confirmar" class="btn-gold" style="display:none; width:100%; margin-top:25px;" onclick="finalizarAgendamento()">CONFIRMAR AGENDAMENTO</button>
+        <button class="btn-outline" onclick="voltarAgenda()" style="width:100%; margin-top:15px; padding: 15px;">Voltar</button>
+    </div>
+
+<script>
+    const firebaseConfig = { apiKey: "AIzaSyBbFcsmHNVMbfdhWZfb_p5qi0nebrAEUXE", authDomain: "agenda-barbearia-c2e3e.firebaseapp.com", databaseURL: "https://agenda-barbearia-c2e3e-default-rtdb.firebaseio.com", projectId: "agenda-barbearia-c2e3e", storageBucket: "agenda-barbearia-c2e3e.firebasestorage.app", messagingSenderId: "269186051650", appId: "1:269186051650:web:4f47ca696073c873fc47db" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let cliente = JSON.parse(localStorage.getItem('barber_user'));
+    let temp = {};
+
+    // --- FUNÇÃO DE MÁSCARA ---
+    function mascararTel(v) {
+        v = v.replace(/\D/g, ""); // Remove tudo o que não é dígito
+        v = v.replace(/^(\d{2})(\d)/g, "($1)$2"); // Coloca parênteses em volta dos dois primeiros dígitos
+        v = v.replace(/(\d{5})(\d)/, "$1-$2"); // Coloca hífen entre o quinto e o sexto dígitos
+        return v;
+    }
+
+    // Aplicar máscara nos inputs de telefone
+    document.getElementById('login-tel').addEventListener('keyup', (e) => {
+        e.target.value = mascararTel(e.target.value);
+    });
+    document.getElementById('edit-tel').addEventListener('keyup', (e) => {
+        e.target.value = mascararTel(e.target.value);
+    });
+
+    function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='view-perfil' && cliente){ document.getElementById('edit-nome').value = cliente.nome; document.getElementById('edit-tel').value = cliente.tel; } window.scrollTo(0,0); }
+    function logout() { localStorage.removeItem('barber_user'); location.reload(); }
+    
+    function salvarLogin() {
+        const nome = document.getElementById('login-nome').value, tel = document.getElementById('login-tel').value;
+        if(nome.length < 3 || tel.length < 13) return alert("Preencha os dados corretamente com DDD e número.");
+        const telLimpo = tel.replace(/\D/g,'');
+        db.ref(`usuarios/${telLimpo}/perfil`).set({ nome, tel }).then(() => { cliente = { nome, tel }; localStorage.setItem('barber_user', JSON.stringify(cliente)); checkLogin(); });
+    }
+
+    function atualizarPerfil() {
+        const nome = document.getElementById('edit-nome').value, tel = document.getElementById('edit-tel').value;
+        if(nome.length < 3 || tel.length < 13) return alert("Dados inválidos.");
+        const telLimpo = tel.replace(/\D/g,'');
+        db.ref(`usuarios/${telLimpo}/perfil`).update({ nome, tel }).then(() => { cliente = { nome, tel }; localStorage.setItem('barber_user', JSON.stringify(cliente)); alert("Perfil atualizado!"); showView('view-home'); });
+    }
+
+    function checkLogin() { if(!cliente) showView('view-login'); else { document.getElementById('txt-saudacao').innerText = `Olá, ${cliente.nome.split(' ')[0]}!`; carregarFidelidade(); monitorarSincronizado(); showView('view-home'); } }
+
+    function carregarFidelidade() {
+        const telLimpo = cliente.tel.replace(/\D/g,'');
+        db.ref(`config/campanha_fidelidade`).on('value', snapCamp => {
+            const config = snapCamp.val();
+            if(config && config.ativo) {
+                document.getElementById('sessao-fidelidade').style.display = 'block';
+                const meta = config.meta || 10;
+                document.getElementById('subtitulo-fidelidade').innerText = `Junte ${meta} selos e ganhe ${config.premio}!`;
+                db.ref(`usuarios/${telLimpo}/pontos`).on('value', s => {
+                    const pts = s.val() || 0, cont = document.getElementById('pontos-cliente'); cont.innerHTML = "";
+                    for(let i=1; i<=meta; i++) {
+                        let d = document.createElement('div'); d.className = i <= pts ? 'ponto-circulo check' : (i===meta ? 'ponto-circulo brinde' : 'ponto-circulo');
+                        d.innerText = i === meta ? '🎁' : i; cont.appendChild(d);
+                    }
+                    document.getElementById('msg-fidelidade').innerText = pts >= meta ? "PRÊMIO DISPONÍVEL!" : `Faltam apenas ${meta-pts} selos.`;
+                });
+            } else document.getElementById('sessao-fidelidade').style.display = 'none';
+        });
+    }
+
+    function selecionarBarbeiro(id, nome, path = null) { temp.bId = id; temp.bNome = nome; temp.remarcarPath = path; document.getElementById('txt-nome-barbeiro').innerText = nome; showView('view-agenda'); }
+    function voltarAgenda() { temp.remarcarPath = null; showView('view-barbeiros'); }
+
+    async function buscarHorarios() {
+        const dataInput = document.getElementById('input-data').value; if(!dataInput) return;
+        temp.data = dataInput; const cfg = (await db.ref(`config/${temp.bId}`).once('value')).val() || {inicio:8, fim:19, intervalo:60, folgas:[]};
+        
+        if(cfg.ferias_ativo && dataInput >= cfg.ferias_ini && dataInput <= cfg.ferias_fim){
+             document.getElementById('container-horas').innerHTML = ""; document.getElementById('aviso-fechado').innerText = "PROFISSIONAL EM FÉRIAS"; document.getElementById('aviso-fechado').style.display = "block"; return;
+        }
+
+        const dia = new Date(dataInput + 'T00:00:00').getDay(), cont = document.getElementById('container-horas');
+        if((cfg.folgas || []).includes(dia)) { cont.innerHTML = ""; document.getElementById('aviso-fechado').innerText = "BARBEARIA FECHADA HOJE"; document.getElementById('aviso-fechado').style.display = "block"; return; }
+        
+        document.getElementById('aviso-fechado').style.display = "none";
+        db.ref(`agendamentos/${temp.bId}/${temp.data}`).on('value', snap => {
+            const ags = snap.val() || {}; cont.innerHTML = "";
+            for(let t = parseInt(cfg.inicio)*60; t < parseInt(cfg.fim)*60; t += parseInt(cfg.intervalo)) {
+                let h = Math.floor(t/60), m = t%60, hora = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`, key = hora.replace(':','h'), div = document.createElement('div');
+                if(h >= (cfg.almoço_ini||12) && h < (cfg.almoço_fim||13)) continue;
+                
+                div.className = ags[key] ? 'slot indisponivel' : 'slot';
+                div.innerText = hora;
+                
+                if(!ags[key]) {
+                    div.onclick = () => { 
+                        document.querySelectorAll('.slot').forEach(s => s.classList.remove('selecionado')); 
+                        div.classList.add('selecionado'); 
+                        temp.hora = hora; 
+                        document.getElementById('btn-confirmar').style.display = 'block'; 
+                    };
+                }
+                cont.appendChild(div);
+            }
+        });
+    }
+
+    function finalizarAgendamento() {
+        const key = temp.hora.replace(':','h'), telLimpo = cliente.tel.replace(/\D/g,''), ag = { nome: cliente.nome, tel: cliente.tel, data: temp.data, hora: temp.hora, bId: temp.bId, bNome: temp.bNome };
+        let up = {}; if(temp.remarcarPath){ const p = temp.remarcarPath.split('_'); up[`agendamentos/${p[0]}/${p[1]}/${p[2]}`] = null; up[`usuarios/${telLimpo}/links/${temp.remarcarPath}`] = null; }
+        up[`agendamentos/${temp.bId}/${temp.data}/${key}`] = ag; up[`usuarios/${telLimpo}/links/${temp.bId}_${temp.data}_${key}`] = true;
+        db.ref().update(up).then(() => { alert("Agendado com sucesso!"); temp.remarcarPath = null; showView('view-home'); });
+    }
+
+    function monitorarSincronizado() {
+        const telLimpo = cliente.tel.replace(/\D/g,'');
+        db.ref(`usuarios/${telLimpo}/links`).on('value', snap => {
+            const links = snap.val(), cont = document.getElementById('lista-meus-horarios');
+            cont.innerHTML = links ? "" : "<p style='color:var(--gray); padding: 10px;'>Você não possui horários agendados.</p>";
+            for(let path in links) {
+                const p = path.split('_');
+                db.ref(`agendamentos/${p[0]}/${p[1]}/${p[2]}`).on('value', bSnap => {
+                    const info = bSnap.val();
+                    if(info && info.nome !== "🔒 BLOQUEADO") {
+                        cont.innerHTML += `
+                        <div class="active-booking-card">
+                            <div style="color:var(--gold); font-weight:bold; font-size: 1.1rem; margin-bottom: 5px;">${info.data.split('-').reverse().join('/')} às ${info.hora}</div>
+                            <div style="font-size:0.85rem; margin-bottom: 15px; color: #ccc">Profissional: ${info.bNome}</div>
+                            <div style="display:flex; gap:10px">
+                                <button class="btn-outline" style="color:var(--red); border-color:var(--red); flex:1;" onclick="cancelar('${p[0]}','${p[1]}','${p[2]}')">CANCELAR</button>
+                                <button class="btn-outline" style="flex:1;" onclick="selecionarBarbeiro('${p[0]}','${info.bNome}','${path}')">REMARCAR</button>
+                            </div>
+                        </div>`;
+                    }
+                });
+            }
+        });
+    }
+
+    function cancelar(bId, data, hKey) { if(confirm("Deseja realmente cancelar este horário?")) db.ref(`agendamentos/${bId}/${data}/${hKey}`).remove(); }
+    checkLogin();
+</script>
+</body>
+</html>
