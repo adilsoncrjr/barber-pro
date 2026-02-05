@@ -37,7 +37,18 @@
             display: block;
         }
 
-        input[type="date"] { padding-left: 8px; padding-right: 5px; width: calc(100% - 2px); }
+        /* AJUSTE DO CARD DE DATA */
+        #admin-date { 
+            width: 100%; 
+            padding: 15px; 
+            background: var(--card); 
+            border: 1px solid #222; 
+            border-radius: 12px; 
+            color: var(--text); 
+            margin: 0 0 20px 0; 
+            box-sizing: border-box;
+            display: block;
+        }
         
         .grid-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 10px; }
         .grid-datas label { font-size: 0.75rem; color: var(--gold); display: block; margin-bottom: 2px; }
@@ -507,7 +518,11 @@
                 if(info && info.tel) {
                     const telLimpo = info.tel.replace(/\D/g,'');
                     const linkKey = `${bAtual}_${d}_${k}`;
-                    let up = {}; up[`agendamentos/${bAtual}/${d}/${k}`] = null; up[`usuarios/${telLimpo}/links/${linkKey}`] = null;
+                    let up = {}; 
+                    // Remove do Barbeiro
+                    up[`agendamentos/${bAtual}/${d}/${k}`] = null; 
+                    // Remove do Histórico do Cliente (Correção Solicitada)
+                    up[`usuarios/${telLimpo}/links/${linkKey}`] = null;
                     db.ref().update(up);
                 } else db.ref(`agendamentos/${bAtual}/${d}/${k}`).remove();
             });
