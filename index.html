@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Barber Pro | Cliente</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -19,7 +19,49 @@
         
         .glass-card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid #222; margin-bottom: 25px; }
         
-        input { width: 100%; padding: 16px; background: #1e1e1e; border: 1px solid #333; color: white; border-radius: 12px; margin-bottom: 12px; font-size: 1rem; outline: none; }
+        /* Ajuste de inputs para evitar zoom e garantir aparência no iOS */
+        input { 
+            width: 100%; padding: 16px; background: #1e1e1e; border: 1px solid #333; 
+            color: white; border-radius: 12px; margin-bottom: 12px; 
+            font-size: 16px; /* Tamanho mínimo para não dar zoom no iPhone */
+            outline: none; 
+            -webkit-appearance: none;
+        }
+
+        /* --- CORREÇÃO ESPECÍFICA PARA O INPUT DE DATA NO IPHONE --- */
+        input[type="date"] {
+            position: relative;
+            min-height: 55px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Texto "SELECIONE A DATA" simulado */
+        input[type="date"]::before {
+            content: "📅 SELECIONE A DATA";
+            color: #aaa;
+            position: absolute;
+            left: 16px;
+            font-size: 0.9rem;
+            pointer-events: none;
+        }
+
+        /* Esconde o texto simulado quando o usuário escolhe uma data ou clica */
+        input[type="date"]:focus::before,
+        input[type="date"]:valid::before {
+            display: none !important;
+            content: "" !important;
+        }
+
+        /* Torna o ícone do calendário nativo clicável e visível no Safari */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            position: absolute;
+            right: 10px;
+            padding: 10px;
+            filter: invert(1); /* Deixa o ícone branco no tema escuro */
+            cursor: pointer;
+        }
+        /* --- FIM DA CORREÇÃO --- */
         
         .btn-gold { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
         .btn-outline { background: none; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
@@ -103,7 +145,7 @@
         <h2 id="txt-nome-barbeiro" style="color: var(--gold);">Agenda</h2>
         <div class="glass-card" style="padding: 15px;">
             <label style="font-size: 0.8rem; color: var(--gold); display: block; margin-bottom: 8px;">Selecione a Data:</label>
-            <input type="date" id="input-data" onchange="buscarHorarios()">
+            <input type="date" id="input-data" required onchange="buscarHorarios()">
         </div>
         <div id="aviso-fechado" class="closed-alert">BARBEARIA FECHADA</div>
         <div id="container-horas" class="grid-horas"></div>
@@ -118,21 +160,15 @@
     let cliente = JSON.parse(localStorage.getItem('barber_user'));
     let temp = {};
 
-    // --- FUNÇÃO DE MÁSCARA ---
     function mascararTel(v) {
-        v = v.replace(/\D/g, ""); // Remove tudo o que não é dígito
-        v = v.replace(/^(\d{2})(\d)/g, "($1)$2"); // Coloca parênteses em volta dos dois primeiros dígitos
-        v = v.replace(/(\d{5})(\d)/, "$1-$2"); // Coloca hífen entre o quinto e o sexto dígitos
+        v = v.replace(/\D/g, ""); 
+        v = v.replace(/^(\d{2})(\d)/g, "($1)$2"); 
+        v = v.replace(/(\d{5})(\d)/, "$1-$2"); 
         return v;
     }
 
-    // Aplicar máscara nos inputs de telefone
-    document.getElementById('login-tel').addEventListener('keyup', (e) => {
-        e.target.value = mascararTel(e.target.value);
-    });
-    document.getElementById('edit-tel').addEventListener('keyup', (e) => {
-        e.target.value = mascararTel(e.target.value);
-    });
+    document.getElementById('login-tel').addEventListener('keyup', (e) => { e.target.value = mascararTel(e.target.value); });
+    document.getElementById('edit-tel').addEventListener('keyup', (e) => { e.target.value = mascararTel(e.target.value); });
 
     function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); if(id==='view-perfil' && cliente){ document.getElementById('edit-nome').value = cliente.nome; document.getElementById('edit-tel').value = cliente.tel; } window.scrollTo(0,0); }
     function logout() { localStorage.removeItem('barber_user'); location.reload(); }
