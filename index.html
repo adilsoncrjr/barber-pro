@@ -4,12 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Barber Pro | Cliente</title>
+    
     <link rel="icon" type="image/png" href="Kevinho Barber.png">
     <link rel="apple-touch-icon" href="Kevinho Barber.png">
+    
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Kevinho Barber","short_name":"Kevinho","start_url":".","display":"standalone","background_color":"#0A0A0A","theme_color":"#D4AF37","icons":[{"src":"Kevinho Barber.png","sizes":"512x512","type":"image/png"}]}'>
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Kevinho Barber">
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -33,7 +37,6 @@
             -webkit-appearance: none;
         }
 
-        /* AJUSTE DATA PC/IPHONE */
         input[type="date"] { min-height: 55px; }
         input[type="date"]::before { content: attr(placeholder); width: 100%; color: #aaa; }
         input[type="date"]:focus::before, input[type="date"]:valid::before { display: none; content: ""; }
@@ -66,7 +69,6 @@
             <h2 style="color: var(--gold); font-size: 1.4rem; margin-bottom: 8px; letter-spacing: 1px;">Bem-vindo à KEVINHO BARBER</h2>
             <p style="color: var(--gray); font-size: 0.9rem; font-weight: 400;">Agende seu horário de forma rápida e prática</p>
         </div>
-        
         <div class="glass-card">
             <input type="text" id="login-nome" placeholder="Nome Completo">
             <input type="tel" id="login-tel" placeholder="(00)00000-0000" maxlength="14">
