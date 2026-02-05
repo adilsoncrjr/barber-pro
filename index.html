@@ -19,46 +19,35 @@
         
         .glass-card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid #222; margin-bottom: 25px; }
         
-        /* Ajuste de inputs para evitar zoom e garantir aparência no iOS */
         input { 
             width: 100%; padding: 16px; background: #1e1e1e; border: 1px solid #333; 
             color: white; border-radius: 12px; margin-bottom: 12px; 
-            font-size: 16px; /* Tamanho mínimo para não dar zoom no iPhone */
+            font-size: 16px; 
             outline: none; 
             -webkit-appearance: none;
         }
 
-        /* --- CORREÇÃO ESPECÍFICA PARA O INPUT DE DATA NO IPHONE --- */
+        /* --- NOVA CORREÇÃO PARA DATA (PC E CELULAR) --- */
         input[type="date"] {
-            position: relative;
             min-height: 55px;
-            display: flex;
-            align-items: center;
         }
 
-        /* Texto "SELECIONE A DATA" simulado */
+        /* No PC, removemos aquela sobreposição que bugou */
         input[type="date"]::before {
-            content: "📅 SELECIONE A DATA";
+            content: attr(placeholder);
+            width: 100%;
             color: #aaa;
-            position: absolute;
-            left: 16px;
-            font-size: 0.9rem;
-            pointer-events: none;
         }
 
-        /* Esconde o texto simulado quando o usuário escolhe uma data ou clica */
+        /* Quando tem valor ou foca, o placeholder do campo de data some para mostrar os números */
         input[type="date"]:focus::before,
         input[type="date"]:valid::before {
-            display: none !important;
-            content: "" !important;
+            display: none;
+            content: "";
         }
 
-        /* Torna o ícone do calendário nativo clicável e visível no Safari */
         input[type="date"]::-webkit-calendar-picker-indicator {
-            position: absolute;
-            right: 10px;
-            padding: 10px;
-            filter: invert(1); /* Deixa o ícone branco no tema escuro */
+            filter: invert(1);
             cursor: pointer;
         }
         /* --- FIM DA CORREÇÃO --- */
@@ -144,8 +133,8 @@
     <div id="view-agenda" class="view">
         <h2 id="txt-nome-barbeiro" style="color: var(--gold);">Agenda</h2>
         <div class="glass-card" style="padding: 15px;">
-            <label style="font-size: 0.8rem; color: var(--gold); display: block; margin-bottom: 8px;">Selecione a Data:</label>
-            <input type="date" id="input-data" required onchange="buscarHorarios()">
+            <label style="font-size: 0.8rem; color: var(--gold); display: block; margin-bottom: 8px;">Data do Agendamento:</label>
+            <input type="text" id="input-data" placeholder="📅 SELECIONE A DATA" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'" onchange="buscarHorarios()" required>
         </div>
         <div id="aviso-fechado" class="closed-alert">BARBEARIA FECHADA</div>
         <div id="container-horas" class="grid-horas"></div>
