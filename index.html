@@ -20,7 +20,6 @@
         :root { --gold: #D4AF37; --bg: #0A0A0A; --card: #161616; --text: #FFF; --gray: #888; --red: #ff4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* AJUSTE PARA IPHONE (SAFE AREA) */
         body { 
             background: var(--bg); 
             color: var(--text); 
@@ -244,32 +243,66 @@
         db.ref().update(up).then(() => { alert("Agendado com sucesso!"); temp.remarcarPath = null; showView('view-home'); });
     }
 
+    /* AJUSTE NO MONITORAMENTO E RENDERIZAÇÃO */
     function monitorarSincronizado() {
         const telLimpo = cliente.tel.replace(/\D/g,'');
+        const cont = document.getElementById('lista-meus-horarios');
+        
         db.ref(`usuarios/${telLimpo}/links`).on('value', snap => {
-            const links = snap.val(), cont = document.getElementById('lista-meus-horarios');
-            cont.innerHTML = links ? "" : "<p style='color:var(--gray); padding: 10px;'>Você não possui horários agendados.</p>";
+            const links = snap.val();
+            cont.innerHTML = ""; // Limpa completamente antes de re-renderizar
+
+            if(!links || Object.keys(links).length === 0) {
+                cont.innerHTML = "<p style='color:var(--gray); padding: 10px;'>Você não possui horários agendados.</p>";
+                return;
+            }
+
             for(let path in links) {
                 const p = path.split('_');
+                // Valida se o registro ainda existe no banco antes de desenhar na tela
                 db.ref(`agendamentos/${p[0]}/${p[1]}/${p[2]}`).on('value', bSnap => {
                     const info = bSnap.val();
-                    if(info && info.nome !== "🔒 BLOQUEADO") {
-                        cont.innerHTML += `
-                        <div class="active-booking-card">
+                    
+                    // Se o agendamento sumiu da agenda, limpa o vínculo do cliente também
+                    if(!info || info.nome === "🔒 BLOQUEADO") {
+                        db.ref(`usuarios/${telLimpo}/links/${path}`).remove();
+                        const cardExistente = document.getElementById(`card-${path}`);
+                        if(cardExistente) cardExistente.remove();
+                        return;
+                    }
+
+                    // Evita duplicatas se o listener disparar novamente
+                    if(document.getElementById(`card-${path}`)) return;
+
+                    cont.insertAdjacentHTML('beforeend', `
+                        <div class="active-booking-card" id="card-${path}">
                             <div style="color:var(--gold); font-weight:bold; font-size: 1.1rem; margin-bottom: 5px;">${info.data.split('-').reverse().join('/')} às ${info.hora}</div>
                             <div style="font-size:0.85rem; margin-bottom: 15px; color: #ccc">Profissional: ${info.bNome}</div>
                             <div style="display:flex; gap:10px">
                                 <button class="btn-outline" style="color:var(--red); border-color:var(--red); flex:1;" onclick="cancelar('${p[0]}','${p[1]}','${p[2]}')">CANCELAR</button>
                                 <button class="btn-outline" style="flex:1;" onclick="selecionarBarbeiro('${p[0]}','${info.bNome}','${path}')">REMARCAR</button>
                             </div>
-                        </div>`;
-                    }
+                        </div>`);
                 });
             }
         });
     }
 
-    function cancelar(bId, data, hKey) { if(confirm("Deseja realmente cancelar este horário?")) db.ref(`agendamentos/${bId}/${data}/${hKey}`).remove(); }
+    /* AJUSTE NO CANCELAMENTO COMPLETO */
+    function cancelar(bId, data, hKey) { 
+        if(confirm("Deseja realmente cancelar este horário?")) {
+            const telLimpo = cliente.tel.replace(/\D/g,'');
+            const linkKey = `${bId}_${data}_${hKey}`;
+            let up = {};
+            up[`agendamentos/${bId}/${data}/${hKey}`] = null;
+            up[`usuarios/${telLimpo}/links/${linkKey}`] = null;
+            
+            db.ref().update(up).then(() => {
+                alert("Horário cancelado com sucesso.");
+            });
+        }
+    }
+
     checkLogin();
 </script>
 </body>
