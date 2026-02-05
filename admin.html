@@ -37,18 +37,7 @@
             display: block;
         }
 
-        /* AJUSTE DO CARD DE DATA */
-        #admin-date { 
-            width: 100%; 
-            padding: 15px; 
-            background: var(--card); 
-            border: 1px solid #222; 
-            border-radius: 12px; 
-            color: var(--text); 
-            margin: 0 0 20px 0; 
-            box-sizing: border-box;
-            display: block;
-        }
+        input[type="date"] { padding-left: 8px; padding-right: 5px; width: calc(100% - 2px); }
         
         .grid-datas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-top: 10px; }
         .grid-datas label { font-size: 0.75rem; color: var(--gold); display: block; margin-bottom: 2px; }
@@ -87,6 +76,24 @@
         input:checked + .slider { background-color: var(--green); }
         input:checked + .slider:before { transform: translateX(26px); }
         .row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        /* 1. CORREÇÃO DE LARGURA DOS CARDS (DATA E GERAL) */
+.glass-card {
+    width: 100% !important;    /* Força o card a ocupar a largura disponível */
+    max-width: 100% !important;/* Impede que ultrapasse o limite da tela */
+    box-sizing: border-box;     /* Garante que o padding não "empurre" o card para fora */
+    margin-left: 0 !important;  /* Centraliza e remove deslocamentos */
+    margin-right: 0 !important;
+}
+
+/* 2. CORREÇÃO DOS CAMPOS DE DATA (FÉRIAS E INPUTS) */
+input[type="date"], 
+input[type="text"], 
+input[type="number"],
+input[type="time"] {
+    width: 100% !important;    /* O campo nunca será maior que o card */
+    max-width: 100% !important;
+    box-sizing: border-box;     /* Mantém bordas e preenchimento dentro do limite */
+}
     </style>
 </head>
 <body>
@@ -518,11 +525,7 @@
                 if(info && info.tel) {
                     const telLimpo = info.tel.replace(/\D/g,'');
                     const linkKey = `${bAtual}_${d}_${k}`;
-                    let up = {}; 
-                    // Remove do Barbeiro
-                    up[`agendamentos/${bAtual}/${d}/${k}`] = null; 
-                    // Remove do Histórico do Cliente (Correção Solicitada)
-                    up[`usuarios/${telLimpo}/links/${linkKey}`] = null;
+                    let up = {}; up[`agendamentos/${bAtual}/${d}/${k}`] = null; up[`usuarios/${telLimpo}/links/${linkKey}`] = null;
                     db.ref().update(up);
                 } else db.ref(`agendamentos/${bAtual}/${d}/${k}`).remove();
             });
