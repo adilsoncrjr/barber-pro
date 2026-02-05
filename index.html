@@ -11,7 +11,7 @@
         :root { --gold: #D4AF37; --bg: #0A0A0A; --card: #161616; --text: #FFF; --gray: #888; --red: #ff4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        body { background: var(--bg); color: var(--text); padding: 30px 20px 40px 20px; }
+        body { background: var(--bg); color: var(--text); padding: 20px 20px 40px 20px; }
         
         .view { display: none; animation: fadeIn 0.1s ease; }
         .active { display: block; }
@@ -27,30 +27,11 @@
             -webkit-appearance: none;
         }
 
-        /* --- NOVA CORREÇÃO PARA DATA (PC E CELULAR) --- */
-        input[type="date"] {
-            min-height: 55px;
-        }
-
-        /* No PC, removemos aquela sobreposição que bugou */
-        input[type="date"]::before {
-            content: attr(placeholder);
-            width: 100%;
-            color: #aaa;
-        }
-
-        /* Quando tem valor ou foca, o placeholder do campo de data some para mostrar os números */
-        input[type="date"]:focus::before,
-        input[type="date"]:valid::before {
-            display: none;
-            content: "";
-        }
-
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-        /* --- FIM DA CORREÇÃO --- */
+        /* AJUSTE DATA PC/IPHONE */
+        input[type="date"] { min-height: 55px; }
+        input[type="date"]::before { content: attr(placeholder); width: 100%; color: #aaa; }
+        input[type="date"]:focus::before, input[type="date"]:valid::before { display: none; content: ""; }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
         
         .btn-gold { background: var(--gold); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; }
         .btn-outline { background: none; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
@@ -74,7 +55,12 @@
 </head>
 <body>
     <div id="view-login" class="view">
-        <h1 style="color:var(--gold); text-align:center; margin-bottom:40px; font-size: 2.2rem;">Barber Pro</h1>
+        <div style="text-align: center; margin-bottom: 25px; padding-top: 10px;">
+            <img src="Kevinho Barber.png" alt="Logo" style="width: 140px; height: auto; margin-bottom: 20px;">
+            <h2 style="color: var(--gold); font-size: 1.4rem; margin-bottom: 8px; letter-spacing: 1px;">Bem-vindo à KEVINHO BARBER</h2>
+            <p style="color: var(--gray); font-size: 0.9rem; font-weight: 400;">Agende seu horário de forma rápida e prática</p>
+        </div>
+        
         <div class="glass-card">
             <input type="text" id="login-nome" placeholder="Nome Completo">
             <input type="tel" id="login-tel" placeholder="(00)00000-0000" maxlength="14">
@@ -83,12 +69,16 @@
     </div>
     
     <div id="view-home" class="view">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h1 id="txt-saudacao" style="font-size: 1.6rem; border-left: 4px solid var(--gold); padding-left: 12px;">Olá!</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 id="txt-saudacao" style="font-size: 1.4rem; border-left: 4px solid var(--gold); padding-left: 12px;">Olá!</h1>
             <div style="display:flex; gap:8px;">
                 <button class="btn-outline" onclick="showView('view-perfil')">Perfil</button>
                 <button class="btn-outline" onclick="logout()">Sair</button>
             </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <img src="Kevinho Barber.png" alt="Kevinho Barber" style="width: 120px; height: auto; filter: drop-shadow(0 0 8px rgba(0,0,0,0.5));">
         </div>
         
         <div id="sessao-fidelidade" class="glass-card" style="display:none; border-color: var(--gold);">
